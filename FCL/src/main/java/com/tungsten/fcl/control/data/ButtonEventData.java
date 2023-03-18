@@ -35,6 +35,40 @@ import java.util.Optional;
 public class ButtonEventData implements Cloneable, Observable {
 
     /**
+     * Control mouse pointer
+     */
+    private final BooleanProperty pointerFollowProperty = new SimpleBooleanProperty(this, "pointerFollow", false);
+
+    public BooleanProperty pointerFollowProperty() {
+        return pointerFollowProperty;
+    }
+
+    public void setPointerFollow(boolean pointerFollow) {
+        pointerFollowProperty.set(pointerFollow);
+    }
+
+    public boolean isPointerFollow() {
+        return pointerFollowProperty.get();
+    }
+
+    /**
+     * Movable
+     */
+    private final BooleanProperty movableProperty = new SimpleBooleanProperty(this, "movable", false);
+
+    public BooleanProperty movableProperty() {
+        return movableProperty;
+    }
+
+    public void setMovable(boolean movable) {
+        movableProperty.set(movable);
+    }
+
+    public boolean isMovable() {
+        return movableProperty.get();
+    }
+
+    /**
      * Press event
      */
     private final ObjectProperty<Event> pressEventProperty = new SimpleObjectProperty<>(this, "pressEvent", new Event());
@@ -107,6 +141,8 @@ public class ButtonEventData implements Cloneable, Observable {
     }
 
     public void addPropertyChangedListener(InvalidationListener listener) {
+        pointerFollowProperty.addListener(listener);
+        movableProperty.addListener(listener);
         pressEventProperty.addListener(listener);
         longPressEventProperty.addListener(listener);
         clickEventProperty.addListener(listener);
@@ -132,6 +168,8 @@ public class ButtonEventData implements Cloneable, Observable {
     @Override
     public ButtonEventData clone() {
         ButtonEventData data = new ButtonEventData();
+        data.setPointerFollow(isPointerFollow());
+        data.setMovable(isMovable());
         data.setPressEvent(getPressEvent().clone());
         data.setLongPressEvent(getLongPressEvent().clone());
         data.setClickEvent(getClickEvent().clone());
@@ -147,10 +185,12 @@ public class ButtonEventData implements Cloneable, Observable {
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-            obj.addProperty("pressEvent", gson.toJson(src.getPressEvent()));
-            obj.addProperty("longPressEvent", gson.toJson(src.getLongPressEvent()));
-            obj.addProperty("clickEvent", gson.toJson(src.getClickEvent()));
-            obj.addProperty("doubleClickEvent", gson.toJson(src.getDoubleClickEvent()));
+            obj.addProperty("pointerFollow", src.isPointerFollow());
+            obj.addProperty("Movable", src.isMovable());
+            obj.add("pressEvent", gson.toJsonTree(src.getPressEvent()).getAsJsonObject());
+            obj.add("longPressEvent", gson.toJsonTree(src.getLongPressEvent()).getAsJsonObject());
+            obj.add("clickEvent", gson.toJsonTree(src.getClickEvent()).getAsJsonObject());
+            obj.add("doubleClickEvent", gson.toJsonTree(src.getDoubleClickEvent()).getAsJsonObject());
 
             return obj;
         }
@@ -164,10 +204,12 @@ public class ButtonEventData implements Cloneable, Observable {
             ButtonEventData data = new ButtonEventData();
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-            data.setPressEvent(gson.fromJson(Optional.ofNullable(obj.get("pressEvent")).map(JsonElement::getAsString).orElse(gson.toJson(new Event())), Event.class));
-            data.setLongPressEvent(gson.fromJson(Optional.ofNullable(obj.get("longPressEvent")).map(JsonElement::getAsString).orElse(gson.toJson(new Event())), Event.class));
-            data.setClickEvent(gson.fromJson(Optional.ofNullable(obj.get("clickEvent")).map(JsonElement::getAsString).orElse(gson.toJson(new Event())), Event.class));
-            data.setDoubleClickEvent(gson.fromJson(Optional.ofNullable(obj.get("doubleClickEvent")).map(JsonElement::getAsString).orElse(gson.toJson(new Event())), Event.class));
+            data.setPointerFollow(Optional.ofNullable(obj.get("pointerFollow")).map(JsonElement::getAsBoolean).orElse(false));
+            data.setMovable(Optional.ofNullable(obj.get("Movable")).map(JsonElement::getAsBoolean).orElse(false));
+            data.setPressEvent(gson.fromJson(Optional.ofNullable(obj.get("pressEvent")).map(JsonElement::getAsJsonObject).orElse(gson.toJsonTree(new Event()).getAsJsonObject()), new TypeToken<Event>(){}.getType()));
+            data.setLongPressEvent(gson.fromJson(Optional.ofNullable(obj.get("longPressEvent")).map(JsonElement::getAsJsonObject).orElse(gson.toJsonTree(new Event()).getAsJsonObject()), new TypeToken<Event>(){}.getType()));
+            data.setClickEvent(gson.fromJson(Optional.ofNullable(obj.get("clickEvent")).map(JsonElement::getAsJsonObject).orElse(gson.toJsonTree(new Event()).getAsJsonObject()), new TypeToken<Event>(){}.getType()));
+            data.setDoubleClickEvent(gson.fromJson(Optional.ofNullable(obj.get("doubleClickEvent")).map(JsonElement::getAsJsonObject).orElse(gson.toJsonTree(new Event()).getAsJsonObject()), new TypeToken<Event>(){}.getType()));
 
             return data;
         }
@@ -175,23 +217,6 @@ public class ButtonEventData implements Cloneable, Observable {
 
     @JsonAdapter(Event.Serializer.class)
     public static class Event implements Cloneable, Observable {
-
-        /**
-         * Control mouse pointer
-         */
-        private final BooleanProperty pointerFollowProperty = new SimpleBooleanProperty(this, "pointerFollow", false);
-        
-        public BooleanProperty pointerFollowProperty() {
-            return pointerFollowProperty;
-        }
-        
-        public void setPointerFollow(boolean pointerFollow) {
-            pointerFollowProperty.set(pointerFollow);
-        }
-        
-        public boolean isPointerFollow() {
-            return pointerFollowProperty.get();
-        }
 
         /**
          * Keep pressing
@@ -245,23 +270,6 @@ public class ButtonEventData implements Cloneable, Observable {
         }
 
         /**
-         * Movable
-         */
-        private final BooleanProperty movableProperty = new SimpleBooleanProperty(this, "movable", false);
-
-        public BooleanProperty movableProperty() {
-            return movableProperty;
-        }
-
-        public void setMovable(boolean movable) {
-            movableProperty.set(movable);
-        }
-
-        public boolean isMovable() {
-            return movableProperty.get();
-        }
-
-        /**
          * Switch touch mode
          */
         private final BooleanProperty switchTouchModeProperty = new SimpleBooleanProperty(this, "switchTouchMode", false);
@@ -293,6 +301,23 @@ public class ButtonEventData implements Cloneable, Observable {
 
         public boolean isInput() {
             return inputProperty.get();
+        }
+
+        /**
+         * Open quick input dialog
+         */
+        private final BooleanProperty quickInputProperty = new SimpleBooleanProperty(this, "quickInput", false);
+
+        public BooleanProperty quickInputProperty() {
+            return quickInputProperty;
+        }
+
+        public void setQuickInput(boolean quickInput) {
+            quickInputProperty.set(quickInput);
+        }
+
+        public boolean isQuickInput() {
+            return quickInputProperty.get();
         }
 
         /**
@@ -343,13 +368,12 @@ public class ButtonEventData implements Cloneable, Observable {
         }
 
         public void addPropertyChangedListener(InvalidationListener listener) {
-            pointerFollowProperty.addListener(listener);
             autoKeepProperty.addListener(listener);
             autoClickProperty.addListener(listener);
             openMenuProperty.addListener(listener);
-            movableProperty.addListener(listener);
             switchTouchModeProperty.addListener(listener);
             inputProperty.addListener(listener);
+            quickInputProperty.addListener(listener);
             outputTextProperty.addListener(listener);
             outputKeycodesList.addListener(listener);
             bindViewGroupList.addListener(listener);
@@ -374,13 +398,12 @@ public class ButtonEventData implements Cloneable, Observable {
         @Override
         public Event clone() {
             Event event = new Event();
-            event.setPointerFollow(isPointerFollow());
             event.setAutoKeep(isAutoKeep());
             event.setAutoClick(isAutoClick());
             event.setOpenMenu(isOpenMenu());
-            event.setMovable(isMovable());
             event.setSwitchTouchMode(isSwitchTouchMode());
             event.setInput(isInput());
+            event.setQuickInput(isQuickInput());
             event.setOutputText(getOutputText());
             event.setOutputKeycodes(outputKeycodesList());
             event.setBindViewGroup(bindViewGroupList());
@@ -395,13 +418,12 @@ public class ButtonEventData implements Cloneable, Observable {
 
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-                obj.addProperty("pointerFollow", src.isPointerFollow());
                 obj.addProperty("autoKeep", src.isAutoKeep());
                 obj.addProperty("autoClick", src.isAutoClick());
                 obj.addProperty("openMenu", src.isOpenMenu());
-                obj.addProperty("Movable", src.isMovable());
                 obj.addProperty("switchTouchMode", src.isSwitchTouchMode());
                 obj.addProperty("input", src.isInput());
+                obj.addProperty("quickInput", src.isQuickInput());
                 obj.addProperty("outputText", src.getOutputText());
                 obj.add("outputKeycodes", gson.toJsonTree(new ArrayList<>(src.outputKeycodesList()), new TypeToken<ArrayList<Integer>>(){}.getType()).getAsJsonArray());
                 obj.add("bindViewGroup", gson.toJsonTree(new ArrayList<>(src.bindViewGroupList()), new TypeToken<ArrayList<String>>(){}.getType()).getAsJsonArray());
@@ -418,13 +440,12 @@ public class ButtonEventData implements Cloneable, Observable {
                 Event event = new Event();
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-                event.setPointerFollow(Optional.ofNullable(obj.get("pointerFollow")).map(JsonElement::getAsBoolean).orElse(false));
                 event.setAutoKeep(Optional.ofNullable(obj.get("autoKeep")).map(JsonElement::getAsBoolean).orElse(false));
                 event.setAutoClick(Optional.ofNullable(obj.get("autoClick")).map(JsonElement::getAsBoolean).orElse(false));
                 event.setOpenMenu(Optional.ofNullable(obj.get("openMenu")).map(JsonElement::getAsBoolean).orElse(false));
-                event.setMovable(Optional.ofNullable(obj.get("Movable")).map(JsonElement::getAsBoolean).orElse(false));
                 event.setSwitchTouchMode(Optional.ofNullable(obj.get("switchTouchMode")).map(JsonElement::getAsBoolean).orElse(false));
                 event.setInput(Optional.ofNullable(obj.get("input")).map(JsonElement::getAsBoolean).orElse(false));
+                event.setQuickInput(Optional.ofNullable(obj.get("quickInput")).map(JsonElement::getAsBoolean).orElse(false));
                 event.setOutputText(Optional.ofNullable(obj.get("outputText")).map(JsonElement::getAsString).orElse(""));
                 event.setOutputKeycodes(FXCollections.observableList(gson.fromJson(Optional.ofNullable(obj.get("outputKeycodes")).map(JsonElement::getAsJsonArray).orElse(new JsonArray()), new TypeToken<ArrayList<Integer>>(){}.getType())));
                 event.setBindViewGroup(FXCollections.observableList(gson.fromJson(Optional.ofNullable(obj.get("bindViewGroup")).map(JsonElement::getAsJsonArray).orElse(new JsonArray()), new TypeToken<ArrayList<String>>(){}.getType())));

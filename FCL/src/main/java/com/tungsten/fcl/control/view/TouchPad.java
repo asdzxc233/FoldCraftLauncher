@@ -6,12 +6,15 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.tungsten.fcl.FCLApplication;
 import com.tungsten.fcl.control.FCLInput;
 import com.tungsten.fcl.control.GameMenu;
 import com.tungsten.fcl.control.GestureMode;
 import com.tungsten.fcl.control.MouseMoveMode;
 import com.tungsten.fcl.util.AndroidUtils;
 import com.tungsten.fclauncher.bridge.FCLBridge;
+
+import java.util.Objects;
 
 public class TouchPad extends View {
 
@@ -26,20 +29,20 @@ public class TouchPad extends View {
 
     public TouchPad(Context context) {
         super(context);
-        this.screenWidth = AndroidUtils.getScreenWidth(getContext());
-        this.screenHeight = AndroidUtils.getScreenHeight(getContext());
+        this.screenWidth = AndroidUtils.getScreenWidth(FCLApplication.getCurrentActivity());
+        this.screenHeight = AndroidUtils.getScreenHeight(FCLApplication.getCurrentActivity());
     }
 
     public TouchPad(Context context, AttributeSet attrs) {
         super(context, attrs);
-        this.screenWidth = AndroidUtils.getScreenWidth(getContext());
-        this.screenHeight = AndroidUtils.getScreenHeight(getContext());
+        this.screenWidth = AndroidUtils.getScreenWidth(FCLApplication.getCurrentActivity());
+        this.screenHeight = AndroidUtils.getScreenHeight(FCLApplication.getCurrentActivity());
     }
 
     public TouchPad(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        this.screenWidth = AndroidUtils.getScreenWidth(getContext());
-        this.screenHeight = AndroidUtils.getScreenHeight(getContext());
+        this.screenWidth = AndroidUtils.getScreenWidth(FCLApplication.getCurrentActivity());
+        this.screenHeight = AndroidUtils.getScreenHeight(FCLApplication.getCurrentActivity());
     }
 
     private int downX;
@@ -86,11 +89,13 @@ public class TouchPad extends View {
         }
     }
 
+    private final static String POINTER_ID = "TouchPad";
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (gameMenu.getCursorMode() == FCLBridge.CursorEnabled) {
             if (gameMenu.getMenuSetting().getMouseMoveMode() == MouseMoveMode.CLICK) {
-                gameMenu.getInput().setPointer((int) event.getX(), (int) event.getY());
+                gameMenu.getInput().setPointer((int) event.getX(), (int) event.getY(), POINTER_ID);
                 switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
                         gameMenu.getInput().sendKeyEvent(FCLInput.MOUSE_LEFT, true);
@@ -116,7 +121,8 @@ public class TouchPad extends View {
                         int deltaY = (int) ((event.getY() - downY) * gameMenu.getMenuSetting().getMouseSensitivity());
                         int targetX = Math.max(0, Math.min(screenWidth, initialX + deltaX));
                         int targetY = Math.max(0, Math.min(screenHeight, initialY + deltaY));
-                        gameMenu.getInput().setPointer(targetX, targetY);
+                        gameMenu.getInput().setPointerId(POINTER_ID);
+                        gameMenu.getInput().setPointer(targetX, targetY, POINTER_ID);
                         break;
                     case MotionEvent.ACTION_CANCEL:
                     case MotionEvent.ACTION_UP:
@@ -125,6 +131,9 @@ public class TouchPad extends View {
                                 && Math.abs(event.getY() - downY) <= 10) {
                             gameMenu.getInput().sendKeyEvent(FCLInput.MOUSE_LEFT, true);
                             gameMenu.getInput().sendKeyEvent(FCLInput.MOUSE_LEFT, false);
+                        }
+                        if (Objects.equals(gameMenu.getInput().getPointerId(), POINTER_ID)) {
+                            gameMenu.getInput().setPointerId(null);
                         }
                         break;
                     default:
@@ -161,7 +170,8 @@ public class TouchPad extends View {
                         gameMenu.setPointerX(initialX + deltaX);
                         gameMenu.setPointerY(initialY + deltaY);
                     } else {
-                        gameMenu.getInput().setPointer(initialX + deltaX, initialY + deltaY);
+                        gameMenu.getInput().setPointerId(POINTER_ID);
+                        gameMenu.getInput().setPointer(initialX + deltaX, initialY + deltaY, POINTER_ID);
                     }
                     if ((Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) && System.currentTimeMillis() - downTime < 400) {
                         handler.removeCallbacks(runnable);
@@ -171,6 +181,9 @@ public class TouchPad extends View {
                     break;
                 case MotionEvent.ACTION_CANCEL:
                 case MotionEvent.ACTION_UP:
+                    if (Objects.equals(gameMenu.getInput().getPointerId(), POINTER_ID)) {
+                        gameMenu.getInput().setPointerId(null);
+                    }
                     shouldBeDown = false;
                     currentPointerID = -1;
                     handler.removeCallbacks(runnable);
