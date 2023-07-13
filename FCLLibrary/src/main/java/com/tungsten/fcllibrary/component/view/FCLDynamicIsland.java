@@ -44,7 +44,7 @@ public class FCLDynamicIsland extends AppCompatTextView {
             insidePaint.setStyle(Paint.Style.FILL);
             textPaint.setAntiAlias(true);
             textPaint.setStyle(Paint.Style.FILL);
-            textPaint.setTextSize(56);
+            textPaint.setTextSize(ConvertUtils.dip2px(getContext(), 13));
             textPaint.setColor(ThemeEngine.getInstance().getTheme().getAutoTint());
             textPaint.setTextAlign(Paint.Align.CENTER);
             invalidate();
@@ -63,6 +63,7 @@ public class FCLDynamicIsland extends AppCompatTextView {
     };
 
     private void init() {
+        setTextSize(13);
         anim = new DynamicIslandAnim(this);
         setGravity(Gravity.CENTER);
         int tb = ConvertUtils.dip2px(getContext(), 8f);
@@ -81,7 +82,7 @@ public class FCLDynamicIsland extends AppCompatTextView {
         insidePaint.setStyle(Paint.Style.FILL);
         textPaint.setAntiAlias(true);
         textPaint.setStyle(Paint.Style.FILL);
-        textPaint.setTextSize(56);
+        textPaint.setTextSize(ConvertUtils.dip2px(getContext(), 13));
         textPaint.setColor(ThemeEngine.getInstance().getTheme().getAutoTint());
         textPaint.setTextAlign(Paint.Align.CENTER);
     }

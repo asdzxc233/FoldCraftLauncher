@@ -1,15 +1,21 @@
 package com.tungsten.fclauncher.bridge;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.util.Log;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 
 import com.tungsten.fclauncher.FCLPath;
 
+import java.io.File;
 import java.io.Serializable;
 
 public class FCLBridge implements Serializable {
@@ -58,6 +64,8 @@ public class FCLBridge implements Serializable {
     private String controller = "Default";
     private String gameDir;
     private String logPath;
+    private String renderer;
+    private String java;
     private Thread thread;
     private Thread fclLogThread;
     private boolean isLogPipeReady = false;
@@ -66,6 +74,7 @@ public class FCLBridge implements Serializable {
         System.loadLibrary("xhook");
         System.loadLibrary("fcl");
         System.loadLibrary("glfw");
+        System.loadLibrary("fcl_awt");
     }
 
     public FCLBridge() {
@@ -175,6 +184,32 @@ public class FCLBridge implements Serializable {
         return item.getText().toString();
     }
 
+    public static void openLink(final String link) {
+        Context context = FCLPath.CONTEXT;
+        ((Activity) context).runOnUiThread(() -> {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                String targetLink = link;
+                if (targetLink.startsWith("file://")) {
+                    targetLink = targetLink.replace("file://", "");
+                } else if (targetLink.startsWith("file:")) {
+                    targetLink = targetLink.replace("file:", "");
+                }
+                Uri uri;
+                if (targetLink.startsWith("http")) {
+                    uri = Uri.parse(targetLink);
+                } else {
+                    //can`t get authority by R.string.file_browser_provider
+                    uri = FileProvider.getUriForFile(context, "com.tungsten.fcl.provider", new File(targetLink));
+                }
+                intent.setDataAndType(uri, "*/*");
+                context.startActivity(intent);
+            } catch (Exception e) {
+                Log.e("openLink error", e.toString());
+            }
+        });
+    }
+
     public void setScaleFactor(double scaleFactor) {
         this.scaleFactor = scaleFactor;
     }
@@ -198,6 +233,22 @@ public class FCLBridge implements Serializable {
     @Nullable
     public String getGameDir() {
         return gameDir;
+    }
+
+    public void setRenderer(String renderer) {
+        this.renderer = renderer;
+    }
+
+    public String getRenderer() {
+        return renderer;
+    }
+
+    public void setJava(String java) {
+        this.java = java;
+    }
+
+    public String getJava() {
+        return java;
     }
 
     @NonNull

@@ -160,7 +160,7 @@ public class VersionSettingPage extends FCLCommonPage implements ManageUI.Versio
         javaVersionList.add(getContext().getString(R.string.settings_game_java_version_auto));
         javaVersionList.add("JRE 8");
         javaVersionList.add("JRE 17");
-        ArrayAdapter<String> javaAdapter = new ArrayAdapter<>(getContext(), R.layout.item_spinner, javaVersionList);
+        ArrayAdapter<String> javaAdapter = new ArrayAdapter<>(getContext(), R.layout.item_spinner_auto_tint, javaVersionList);
         javaAdapter.setDropDownViewResource(R.layout.item_spinner_dropdown);
         javaSpinner.setAdapter(javaAdapter);
 
@@ -168,7 +168,7 @@ public class VersionSettingPage extends FCLCommonPage implements ManageUI.Versio
         processPriorityList.add(getContext().getString(R.string.settings_advanced_process_priority_low));
         processPriorityList.add(getContext().getString(R.string.settings_advanced_process_priority_normal));
         processPriorityList.add(getContext().getString(R.string.settings_advanced_process_priority_high));
-        ArrayAdapter<String> processPriorityAdapter = new ArrayAdapter<>(getContext(), R.layout.item_spinner, processPriorityList);
+        ArrayAdapter<String> processPriorityAdapter = new ArrayAdapter<>(getContext(), R.layout.item_spinner_auto_tint, processPriorityList);
         processPriorityAdapter.setDropDownViewResource(R.layout.item_spinner_dropdown);
         processPrioritySpinner.setAdapter(processPriorityAdapter);
 
@@ -177,7 +177,7 @@ public class VersionSettingPage extends FCLCommonPage implements ManageUI.Versio
         rendererList.add(getContext().getString(R.string.settings_fcl_renderer_virgl));
         rendererList.add(getContext().getString(R.string.settings_fcl_renderer_angle));
         rendererList.add(getContext().getString(R.string.settings_fcl_renderer_vgpu));
-        ArrayAdapter<String> rendererAdapter = new ArrayAdapter<>(getContext(), R.layout.item_spinner, rendererList);
+        ArrayAdapter<String> rendererAdapter = new ArrayAdapter<>(getContext(), R.layout.item_spinner_auto_tint, rendererList);
         rendererAdapter.setDropDownViewResource(R.layout.item_spinner_dropdown);
         rendererSpinner.setAdapter(rendererAdapter);
 
@@ -281,8 +281,11 @@ public class VersionSettingPage extends FCLCommonPage implements ManageUI.Versio
         modpack.set(versionId != null && profile.getRepository().isModpack(versionId));
         usedMemory.set(MemoryUtils.getUsedDeviceMemory(getContext()));
 
+        InvalidationListener listener = observable -> ManagePageManager.getInstance().onRunDirectoryChange(profile, versionId);
+
         // unbind data fields
         if (lastVersionSetting != null) {
+            lastVersionSetting.isolateGameDirProperty().removeListener(listener);
             FXUtils.unbind(txtJVMArgs, lastVersionSetting.javaArgsProperty());
             FXUtils.unbind(txtGameArgs, lastVersionSetting.minecraftArgsProperty());
             FXUtils.unbind(txtMetaspace, lastVersionSetting.permSizeProperty());
@@ -302,6 +305,9 @@ public class VersionSettingPage extends FCLCommonPage implements ManageUI.Versio
         }
 
         // bind new data fields
+        if (getId() == ManagePageManager.PAGE_ID_MANAGE_SETTING) {
+            versionSetting.isolateGameDirProperty().addListener(listener);
+        }
         FXUtils.bindString(txtJVMArgs, versionSetting.javaArgsProperty());
         FXUtils.bindString(txtGameArgs, versionSetting.minecraftArgsProperty());
         FXUtils.bindString(txtMetaspace, versionSetting.permSizeProperty());
